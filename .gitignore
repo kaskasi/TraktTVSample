@@ -1,3 +1,4 @@
+/.idea/copyright/profiles_settings.xml
 # Built application files
 *.apk
 *.ap_
@@ -23,6 +24,7 @@ local.properties
 proguard/
 
 # Log Files
+/.idea
 *.log
 
 # Android Studio Navigation editor temp files

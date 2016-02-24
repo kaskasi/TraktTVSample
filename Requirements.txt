@@ -1,0 +1,14 @@
+- Wenn die App startet werden die 10 populärsten Filme geladen
+- Wenn die 10 populärsten Filme nach dem Start geladen sind werden sie angezeigt
+- Wenn der User beim Scrollen das Ende der Liste erreicht sollen 10 weitere Filme geladen
+- Wenn weitere Filme geladen sind sollen diese am Ende der Liste angezeigt werden
+- Wenn der User auf die Lupe in der Toolbar drückt wird ein SearchView angezeigt
+- Wenn Zeichen in das Suchfeld eingegeben wurden wird eine neue Suche gestartet
+- Wenn schon 2 Zeichen eingegeben sind wird Eingaben in das Suchfeld wird eine neue Suche gestartet (? nicht spezifiziert)
+- Wenn bei Eingaben in das Suchfeld eine neue Suche gestart wird wird die vorhergehende suche geschlossen
+
+- Von jedem Suchergebnis wird der Filmtitel (titel) angezeigt
+- Von jedem Suchergebnis wird das Erscheinungsjahr (year) angezeigt
+- Von jedem Suchergebnis wird die komplette Zusammenfassung (overview) angezeigt
+- Die Zusammenfassung (overview) soll nicht abgschnitten sein
+- Zu jedem Suchergebnis wird ein Bild angezeigt
