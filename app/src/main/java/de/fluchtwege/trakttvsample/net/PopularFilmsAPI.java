@@ -1,4 +1,4 @@
 package de.fluchtwege.trakttvsample.net;
 
-public interface TraktSearchAPI {
+public interface PopularFilmsAPI {
 }

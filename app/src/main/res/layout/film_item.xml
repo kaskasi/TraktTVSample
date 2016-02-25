@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+        <variable
+            name="viewModel"
+            type="de.fluchtwege.trakttvsample.viewmodel.FilmItemViewModel"/>
+
+    </data>
+
+    <android.support.v7.widget.CardView
+        android:id="@+id/film_card"
+        xmlns:card_view="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/tiny"
+        android:layout_marginTop="@dimen/tiny"
+        android:padding="@dimen/large"
+        card_view:cardCornerRadius="@dimen/medium"
+        card_view:cardUseCompatPadding="true">
+
+        <RelativeLayout
+            android:id="@+id/container_post"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/large"
+            android:clickable="true"
+            android:orientation="horizontal"
+            android:paddingLeft="@dimen/large"
+
+            >
+
+            <ImageView
+                android:id="@+id/film_image"
+                android:layout_width="@dimen/image_size"
+                android:layout_height="@dimen/image_size"
+                android:layout_margin="@dimen/medium"
+                android:background="@color/background"
+                android:padding="@dimen/medium"
+                app:imageUrl="@{viewModel.imageUrl}"
+                />
+
+            <TextView
+                android:id="@+id/film_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignTop="@id/film_image"
+                android:layout_margin="@dimen/medium"
+                android:layout_toRightOf="@id/film_image"
+                android:background="@color/background"
+                android:padding="@dimen/medium"
+                android:text="@{viewModel.title}"/>
+
+
+            <TextView
+                android:id="@+id/film_year"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/film_title"
+                android:layout_margin="@dimen/medium"
+                android:layout_toRightOf="@id/film_image"
+                android:padding="@dimen/medium"
+                android:text="@{viewModel.year}"/>
+
+            <TextView
+                android:id="@+id/something"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/film_year"
+                android:layout_margin="@dimen/medium"
+                android:layout_toRightOf="@id/film_image"
+                android:background="@color/background"
+                android:padding="@dimen/medium"
+                android:text="@{viewModel.title}"/>
+
+
+            <TextView
+                android:id="@+id/more"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/something"
+                android:layout_margin="@dimen/medium"
+                android:layout_toRightOf="@id/film_image"
+                android:padding="@dimen/medium"
+                android:text="@{viewModel.year}"/>
+
+            <TextView
+                android:id="@+id/film_overview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/film_image"
+                android:layout_margin="@dimen/medium"
+                android:background="@color/background"
+                android:padding="@dimen/medium"
+                android:text="@{viewModel.overview}"/>
+
+        </RelativeLayout>
+
+    </android.support.v7.widget.CardView>
+</layout>

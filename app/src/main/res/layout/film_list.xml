@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+        <variable
+            name="viewModel"
+            type="de.fluchtwege.trakttvsample.viewmodel.FilmListViewModel"/>
+    </data>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <android.support.design.widget.AppBarLayout
+            android:id="@+id/appbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:theme="@style/AppTheme.AppBarOverlay">
+
+            <android.support.v7.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:background="?attr/colorPrimary"
+                android:inflateMenu="@{viewModel.menu}"
+                android:setOnMenuItemClickListener="@{viewModel.menuItemClickListener}"
+                android:title="@{viewModel.title}"
+
+                app:popupTheme="@style/AppTheme.PopupOverlay"/>
+
+            <EditText
+                android:id="@+id/searchbar"
+                android:layout_width="match_parent"
+                android:layout_height="45dp"
+                android:padding="@dimen/tiny"
+                android:addTextChangedListener="@{viewModel.watcher}"
+                android:layout_below="@id/toolbar"
+                android:background="@drawable/border"
+                android:setVisibility="@{viewModel.searchBarVisibility}"/>
+
+        </android.support.design.widget.AppBarLayout>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingTop="@dimen/large"
+
+            android:padding="@dimen/activity_horizontal_margin">
+
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/recyclerview"
+                android:layout_width="match_parent"
+                android:addOnScrollListener="@{viewModel.scrollListener}"
+                android:setAdapter="@{viewModel.adapter}"
+                android:setLayoutManager="@{viewModel.manager}"
+                android:layout_height="match_parent"/>
+
+        </RelativeLayout>
+    </LinearLayout>
+
+</layout>
