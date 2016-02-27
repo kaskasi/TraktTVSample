@@ -2,7 +2,6 @@ package de.fluchtwege.trakttvsample.ui.adapter;
 
 import android.databinding.DataBindingUtil;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
@@ -13,6 +12,7 @@ import de.fluchtwege.trakttvsample.R;
 import de.fluchtwege.trakttvsample.databinding.FilmItemBinding;
 import de.fluchtwege.trakttvsample.model.Film;
 import de.fluchtwege.trakttvsample.viewmodel.FilmItemViewModel;
+import timber.log.Timber;
 
 public class FilmAdapter extends RecyclerView.Adapter<FilmAdapter.BindingHolder> {
 
@@ -20,7 +20,7 @@ public class FilmAdapter extends RecyclerView.Adapter<FilmAdapter.BindingHolder>
 
 	@Override
 	public BindingHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-		FilmItemBinding filmBinding = DataBindingUtil.inflate(LayoutInflater.from(parent.getContext()), R.layout.film_item, parent, false);
+		FilmItemBinding filmBinding = DataBindingUtil.inflate(LayoutInflater.from(parent.getContext()), R.layout.film_query_item, parent, false);
 		return new BindingHolder(filmBinding);
 	}
 
@@ -36,7 +36,7 @@ public class FilmAdapter extends RecyclerView.Adapter<FilmAdapter.BindingHolder>
 	}
 
 	public void addFilms(List<Film> films) {
-		Log.i("TAG", "add Films()");
+		Timber.d("addFilms() size: " + films.size());
 		int size = this.films.size();
 		this.films.addAll(size, films);
 	}
@@ -47,6 +47,11 @@ public class FilmAdapter extends RecyclerView.Adapter<FilmAdapter.BindingHolder>
 
 	public void clear() {
 		this.films.clear();
+	}
+
+	//wrapper since Mockito can't stub final methods
+	public void notifyDataChanges() {
+		notifyDataSetChanged();
 	}
 
 	public static class BindingHolder extends RecyclerView.ViewHolder {

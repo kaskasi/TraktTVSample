@@ -1,7 +1,6 @@
 package de.fluchtwege.trakttvsample.net;
 
 import android.support.annotation.VisibleForTesting;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,6 +8,7 @@ import java.util.List;
 import de.fluchtwege.trakttvsample.model.Film;
 import rx.Observable;
 import rx.Subscriber;
+import timber.log.Timber;
 
 public class DataManager {
 
@@ -71,49 +71,32 @@ public class DataManager {
 
 
 	public Observable<List<Film>> getPopularFilms(final int pagesLoaded) {
-
-		return Observable.create(new Observable.OnSubscribe<List<Film>>() { //1
+		return Observable.create(new Observable.OnSubscribe<List<Film>>() {
 
 			@Override
-
 			public void call(Subscriber<? super List<Film>> subscriber) {
-
 				if (!subscriber.isUnsubscribed()) {
-
 					final List<Film> listOf10Films = loadPopularFilms(pagesLoaded);
-
 					subscriber.onNext(listOf10Films);
-
 					subscriber.onCompleted();
-
-					Log.i("TAG", "delivered List()");
-
+					Timber.d("getPopularFilms page: " + pagesLoaded + " call()");
 				}
 			}
-
 		});
 	}
 
 	public Observable<Film> getSearchResult(final String query) {
-		return Observable.create(new Observable.OnSubscribe<Film>() { //1
+		return Observable.create(new Observable.OnSubscribe<Film>() {
 
 			@Override
-
 			public void call(Subscriber<? super Film> subscriber) {
-
 				if (!subscriber.isUnsubscribed()) {
-
 					final Film searchResult = loadSearchResult(query);
-
 					subscriber.onNext(searchResult);
-
 					subscriber.onCompleted();
-
-					Log.i("TAG", "delivered List()");
-
+					Timber.i("getSearchResult query: " +query + "call()");
 				}
 			}
-
 		});
 	}
 

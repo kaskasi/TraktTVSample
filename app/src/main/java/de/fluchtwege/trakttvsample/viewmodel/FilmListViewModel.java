@@ -3,6 +3,7 @@ package de.fluchtwege.trakttvsample.viewmodel;
 import android.databinding.ObservableBoolean;
 import android.databinding.ObservableInt;
 import android.support.annotation.MenuRes;
+import android.support.annotation.NonNull;
 import android.support.annotation.StringRes;
 import android.support.annotation.VisibleForTesting;
 import android.support.v7.widget.LinearLayoutManager;
@@ -11,7 +12,6 @@ import android.support.v7.widget.RecyclerView.OnScrollListener;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.inputmethod.EditorInfo;
@@ -25,16 +25,21 @@ import de.fluchtwege.trakttvsample.R;
 import de.fluchtwege.trakttvsample.model.Film;
 import de.fluchtwege.trakttvsample.net.DataManager;
 import de.fluchtwege.trakttvsample.ui.adapter.FilmAdapter;
+import rx.Scheduler;
 import rx.Subscriber;
-import rx.schedulers.Schedulers;
+import timber.log.Timber;
 
 public class FilmListViewModel {
 
 	private static final int FIRST_PAGE = 0;
 	private int pagesLoaded = FIRST_PAGE;
 
+	//is it an issue that we are exposing these members for databing?
+	@NonNull
 	public final DataManager dataManager = DataManager.getInstance();
+	@NonNull
 	public FilmAdapter adapter = new FilmAdapter();
+	@NonNull
 	public final LinearLayoutManager manager;
 
 	public ObservableInt searchBarVisibility = new ObservableInt(EditText.GONE);
@@ -46,20 +51,29 @@ public class FilmListViewModel {
 	@StringRes
 	public int title = R.string.title_list;
 
+	@NonNull
+	private Scheduler schedulerIO;
+	@NonNull
+	private Scheduler schedulerMain;
+
 
 	public FilmListViewModel(LinearLayoutManager manager) {
 		this.manager = manager;
 	}
 
-	public void init() {
+	//All problems can be solved by another layer of indirection - david wheeler
+	//"...except for the problem of too many layers of indirection." - kevlin henney
+	public void initWithSchedulers(@NonNull final Scheduler schedulerIO, @NonNull final Scheduler schedulerMain) {
+		this.schedulerIO = schedulerIO;
+		this.schedulerMain = schedulerMain;
 		getPopularFilms();
 	}
 
 	@VisibleForTesting
 	public void getPopularFilms() {
 		dataManager.getPopularFilms(pagesLoaded)
-				.observeOn(Schedulers.immediate())
-				.subscribeOn(Schedulers.immediate())
+				.subscribeOn(schedulerIO)
+				.observeOn(schedulerMain)
 				.subscribe(new Subscriber<List<Film>>() {
 					@Override
 					public void onCompleted() {
@@ -67,26 +81,29 @@ public class FilmListViewModel {
 
 					@Override
 					public void onError(Throwable e) {
+						Timber.e("There was a problem loading the films" + e);
 						setLoadingViews(false);
-						//Log.e("TAG", "There was a problem loading the films" + e);
 					}
 
 					@Override
 					public void onNext(List<Film> filmList) {
-						Log.i("TAG", "on Next()");
-						setLoadingViews(false);
-						pagesLoaded++;
-						adapter.addFilms(filmList);
-						adapter.notifyItemInserted(adapter.getItemCount());
+						Timber.d(" get PopularFilms on Next()");
+						onPopularFilms(filmList);
 					}
-
 				});
 	}
 
-	public void getSearchResult(String query) {
+	private void onPopularFilms(List<Film> filmList) {
+		setLoadingViews(false);
+		pagesLoaded++;
+		adapter.addFilms(filmList);
+		adapter.notifyItemInserted(adapter.getItemCount());
+	}
+
+	public void getSearchResult(final String query) {
 		dataManager.getSearchResult(query)
-				.observeOn(Schedulers.immediate())
-				.subscribeOn(Schedulers.immediate())
+				.subscribeOn(schedulerIO)
+				.observeOn(schedulerMain)
 				.subscribe(new Subscriber<Film>() {
 					@Override
 					public void onCompleted() {
@@ -94,21 +111,23 @@ public class FilmListViewModel {
 
 					@Override
 					public void onError(Throwable e) {
+						Timber.e("There was a problem searching the films" + e);
 						setLoadingViews(false);
-						//Log.e("TAG", "There was a problem loading the films" + e);
 					}
 
 					@Override
 					public void onNext(Film film) {
-						Log.i("TAG", "on Next()");
-						setLoadingViews(false);
-						adapter.clear();
-						adapter.addFilm(film);
-						adapter.notifyDataSetChanged();
-						manager.notify();
+						Timber.d("getSearchResult query: " + query + " onNext()");
+						onSearchResult(film);
 					}
-
 				});
+	}
+
+	private void onSearchResult(Film film) {
+		setLoadingViews(false);
+		adapter.clear();
+		adapter.addFilm(film);
+		adapter.notifyDataSetChanged();
 	}
 
 	private void setLoadingViews(boolean visible) {
@@ -149,13 +168,9 @@ public class FilmListViewModel {
 		public void onTextChanged(CharSequence s, int start, int before, int count) {
 			final String query = s.toString().trim();
 			if (query.length() > 0) {
-
 				getSearchResult(query);
-			} else {
-				pagesLoaded = FIRST_PAGE;
-				adapter.clear();
-				adapter.notifyDataSetChanged();
-				getPopularFilms();
+			} else if (query.length() == 0) {
+				hideSearchBarAndLoadPopularFilms();
 			}
 		}
 
@@ -165,23 +180,43 @@ public class FilmListViewModel {
 		}
 	};
 
+	private void hideSearchBarAndLoadPopularFilms() {
+		searchBarVisibility.set(EditText.GONE);
+		pagesLoaded = FIRST_PAGE;
+		adapter.clear();
+		adapter.notifyDataChanges();
+		getPopularFilms();
+	}
+
+
 	public OnScrollListener scrollListener = new OnScrollListener() {
 
 		@Override
 		public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
 			if (dy > 0) {
-				final int visibleItemCount = manager.getChildCount();
-				final int totalItemCount = manager.getItemCount();
-				final int pastVisiblesItems = manager.findFirstVisibleItemPosition();
-
-				if ((visibleItemCount + pastVisiblesItems) >= totalItemCount) {
-					Log.v("TAG", "Last Item Wow !");
+				if (hasReachedBottomOfList()) {
+					Timber.d("onScroll Last Item -> getPopularFilms()");
 					getPopularFilms();
 				}
-
 			}
 		}
 	};
+
+	private boolean hasReachedBottomOfList() {
+		final int visibleItemCount = manager.getChildCount();
+		final int totalItemCount = manager.getItemCount();
+		final int pastVisiblesItems = manager.findFirstVisibleItemPosition();
+
+		return (visibleItemCount + pastVisiblesItems) >= totalItemCount;
+	}
+
+	public boolean onBackPressed() {
+		if (searchBarVisibility.get() == EditText.VISIBLE) {
+			hideSearchBarAndLoadPopularFilms();
+			return true;
+		}
+		return false;
+	}
 
 
 }

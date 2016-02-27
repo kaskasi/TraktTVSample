@@ -9,6 +9,8 @@ import android.support.v7.widget.Toolbar;
 import de.fluchtwege.trakttvsample.R;
 import de.fluchtwege.trakttvsample.databinding.FilmListBinding;
 import de.fluchtwege.trakttvsample.viewmodel.FilmListViewModel;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 public class FilmListActivity extends AppCompatActivity {
 
@@ -22,7 +24,6 @@ public class FilmListActivity extends AppCompatActivity {
 		setSupportActionBar(toolbar);
 
 		viewModel = new FilmListViewModel(new LinearLayoutManager(this));
-
 		FilmListBinding binding = DataBindingUtil.setContentView(this, R.layout.film_list);
 		binding.setViewModel(viewModel);
 	}
@@ -30,6 +31,11 @@ public class FilmListActivity extends AppCompatActivity {
 	@Override
 	protected void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
-		viewModel.init();
+		viewModel.initWithSchedulers(Schedulers.io(), AndroidSchedulers.mainThread());
+	}
+
+	@Override
+	public void onBackPressed() {
+		viewModel.onBackPressed();
 	}
 }
