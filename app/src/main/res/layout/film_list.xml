@@ -29,16 +29,17 @@
                 android:inflateMenu="@{viewModel.menu}"
                 android:setOnMenuItemClickListener="@{viewModel.menuItemClickListener}"
                 android:title="@{viewModel.title}"
-
                 app:popupTheme="@style/AppTheme.PopupOverlay"/>
 
             <EditText
+                android:textColor="@color/black"
                 android:id="@+id/searchbar"
                 android:layout_width="match_parent"
-                android:layout_height="45dp"
-                android:padding="@dimen/tiny"
-                android:addTextChangedListener="@{viewModel.watcher}"
-                android:layout_below="@id/toolbar"
+                android:layout_height="48dp"
+                android:addTextChangedListener="@{viewModel.textWatcher}"
+                android:imeOptions="actionDone"
+                android:singleLine="true"
+                android:setOnEditorActionListener="@{viewModel.editorAction}"
                 android:background="@drawable/border"
                 android:setVisibility="@{viewModel.searchBarVisibility}"/>
 

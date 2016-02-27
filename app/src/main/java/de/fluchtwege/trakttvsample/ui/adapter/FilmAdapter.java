@@ -2,9 +2,11 @@ package de.fluchtwege.trakttvsample.ui.adapter;
 
 import android.databinding.DataBindingUtil;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import de.fluchtwege.trakttvsample.R;
@@ -14,11 +16,7 @@ import de.fluchtwege.trakttvsample.viewmodel.FilmItemViewModel;
 
 public class FilmAdapter extends RecyclerView.Adapter<FilmAdapter.BindingHolder> {
 
-	private List<Film> films;
-
-	public FilmAdapter(List<Film> films) {
-		this.films = films;
-	}
+	private List<Film> films = new ArrayList<>();
 
 	@Override
 	public BindingHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -37,8 +35,18 @@ public class FilmAdapter extends RecyclerView.Adapter<FilmAdapter.BindingHolder>
 		return films.size();
 	}
 
-	public void setFilms(List<Film> films) {
-		this.films = films;
+	public void addFilms(List<Film> films) {
+		Log.i("TAG", "add Films()");
+		int size = this.films.size();
+		this.films.addAll(size, films);
+	}
+
+	public void addFilm(Film film) {
+		this.films.add(film);
+	}
+
+	public void clear() {
+		this.films.clear();
 	}
 
 	public static class BindingHolder extends RecyclerView.ViewHolder {

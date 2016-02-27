@@ -6,4 +6,5 @@
 
 
     <color name="background">#e3e1e3</color>
+    <color name="black">#000000</color>
 </resources>

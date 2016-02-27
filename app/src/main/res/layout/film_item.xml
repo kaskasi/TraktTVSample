@@ -75,17 +75,6 @@
                 android:padding="@dimen/medium"
                 android:text="@{viewModel.title}"/>
 
-
-            <TextView
-                android:id="@+id/more"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/something"
-                android:layout_margin="@dimen/medium"
-                android:layout_toRightOf="@id/film_image"
-                android:padding="@dimen/medium"
-                android:text="@{viewModel.year}"/>
-
             <TextView
                 android:id="@+id/film_overview"
                 android:layout_width="match_parent"
