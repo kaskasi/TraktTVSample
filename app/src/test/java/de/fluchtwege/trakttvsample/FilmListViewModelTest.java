@@ -12,13 +12,12 @@ import android.widget.TextView;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 
-import de.fluchtwege.trakttvsample.ui.adapter.FilmAdapter;
+import de.fluchtwege.trakttvsample.ui.adapter.PopularFilmsAdapter;
 import de.fluchtwege.trakttvsample.viewmodel.FilmListViewModel;
 import rx.schedulers.Schedulers;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.argThat;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -52,7 +51,7 @@ public class FilmListViewModelTest {
 	@NonNull
 	private FilmListViewModel createAndInitializeViewModel(LinearLayoutManager manager) {
 		final FilmListViewModel viewModel = spy(new FilmListViewModel(manager));
-		viewModel.adapter = spy(new FilmAdapter());
+		viewModel.adapter.set(spy(new PopularFilmsAdapter()));
 		viewModel.initWithSchedulers(Schedulers.immediate(), Schedulers.immediate());
 		return viewModel;
 	}
@@ -107,7 +106,7 @@ public class FilmListViewModelTest {
 		final LinearLayoutManager manager = createMockLayoutManagerForPosition(CHILD_COUNT_MIDDLE);
 		final FilmListViewModel viewModel = createAndInitializeViewModel(manager);
 		showSearchBar(viewModel);
-		doNothing().when(viewModel.adapter).notifyDataChanges();
+		//doNothing().when(viewModel.adapter.get()).notifyDataChanges();
 		viewModel.onBackPressed();
 		assertEquals(EditText.GONE, viewModel.searchBarVisibility.get());
 	}

@@ -1,6 +1,7 @@
 package de.fluchtwege.trakttvsample.viewmodel;
 
 import android.databinding.ObservableBoolean;
+import android.databinding.ObservableField;
 import android.databinding.ObservableInt;
 import android.support.annotation.MenuRes;
 import android.support.annotation.NonNull;
@@ -22,9 +23,12 @@ import android.widget.TextView.OnEditorActionListener;
 import java.util.List;
 
 import de.fluchtwege.trakttvsample.R;
-import de.fluchtwege.trakttvsample.model.Film;
+import de.fluchtwege.trakttvsample.model.PopularFilm;
+import de.fluchtwege.trakttvsample.model.QueryResultFilm;
 import de.fluchtwege.trakttvsample.net.DataManager;
-import de.fluchtwege.trakttvsample.ui.adapter.FilmAdapter;
+import de.fluchtwege.trakttvsample.ui.adapter.FilmsAdapter;
+import de.fluchtwege.trakttvsample.ui.adapter.PopularFilmsAdapter;
+import de.fluchtwege.trakttvsample.ui.adapter.QueryResultFilmsAdapter;
 import rx.Scheduler;
 import rx.Subscriber;
 import timber.log.Timber;
@@ -37,8 +41,10 @@ public class FilmListViewModel {
 	//is it an issue that we are exposing these members for databing?
 	@NonNull
 	public final DataManager dataManager = DataManager.getInstance();
+
 	@NonNull
-	public FilmAdapter adapter = new FilmAdapter();
+	public final ObservableField<FilmsAdapter> adapter = new ObservableField<>();
+
 	@NonNull
 	public final LinearLayoutManager manager;
 
@@ -74,7 +80,7 @@ public class FilmListViewModel {
 		dataManager.getPopularFilms(pagesLoaded)
 				.subscribeOn(schedulerIO)
 				.observeOn(schedulerMain)
-				.subscribe(new Subscriber<List<Film>>() {
+				.subscribe(new Subscriber<List<PopularFilm>>() {
 					@Override
 					public void onCompleted() {
 					}
@@ -86,25 +92,29 @@ public class FilmListViewModel {
 					}
 
 					@Override
-					public void onNext(List<Film> filmList) {
+					public void onNext(List<PopularFilm> filmList) {
 						Timber.d(" get PopularFilms on Next()");
 						onPopularFilms(filmList);
 					}
 				});
 	}
 
-	private void onPopularFilms(List<Film> filmList) {
+	private void onPopularFilms(List<PopularFilm> filmList) {
 		setLoadingViews(false);
+		if (pagesLoaded == 0) {
+			adapter.set(new PopularFilmsAdapter());
+		}
 		pagesLoaded++;
-		adapter.addFilms(filmList);
-		adapter.notifyItemInserted(adapter.getItemCount());
+		final PopularFilmsAdapter popularFilmsAdapter = (PopularFilmsAdapter) adapter.get();
+		popularFilmsAdapter.addFilms(filmList);
+		popularFilmsAdapter.notifyItemInserted(adapter.get().getItemCount());
 	}
 
 	public void getSearchResult(final String query) {
 		dataManager.getSearchResult(query)
 				.subscribeOn(schedulerIO)
 				.observeOn(schedulerMain)
-				.subscribe(new Subscriber<Film>() {
+				.subscribe(new Subscriber<List<QueryResultFilm>>() {
 					@Override
 					public void onCompleted() {
 					}
@@ -116,18 +126,19 @@ public class FilmListViewModel {
 					}
 
 					@Override
-					public void onNext(Film film) {
+					public void onNext(List<QueryResultFilm> films) {
 						Timber.d("getSearchResult query: " + query + " onNext()");
-						onSearchResult(film);
+						onSearchResult(films);
 					}
 				});
 	}
 
-	private void onSearchResult(Film film) {
+	private void onSearchResult(List<QueryResultFilm> films) {
 		setLoadingViews(false);
-		adapter.clear();
-		adapter.addFilm(film);
-		adapter.notifyDataSetChanged();
+		adapter.set(new QueryResultFilmsAdapter());
+		final QueryResultFilmsAdapter queryResultFilmsAdapter = (QueryResultFilmsAdapter) adapter.get();
+		queryResultFilmsAdapter.addFilms(films);
+		queryResultFilmsAdapter.notifyDataSetChanged();
 	}
 
 	private void setLoadingViews(boolean visible) {
@@ -183,8 +194,6 @@ public class FilmListViewModel {
 	private void hideSearchBarAndLoadPopularFilms() {
 		searchBarVisibility.set(EditText.GONE);
 		pagesLoaded = FIRST_PAGE;
-		adapter.clear();
-		adapter.notifyDataChanges();
 		getPopularFilms();
 	}
 
