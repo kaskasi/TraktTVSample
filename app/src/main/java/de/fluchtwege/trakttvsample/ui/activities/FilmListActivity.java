@@ -36,6 +36,8 @@ public class FilmListActivity extends AppCompatActivity {
 
 	@Override
 	public void onBackPressed() {
-		viewModel.onBackPressed();
+		if (!viewModel.onBackPressed()) {
+			super.onBackPressed();
+		}
 	}
 }

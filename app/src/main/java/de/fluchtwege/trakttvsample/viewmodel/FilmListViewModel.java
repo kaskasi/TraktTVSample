@@ -31,6 +31,7 @@ import de.fluchtwege.trakttvsample.ui.adapter.PopularFilmsAdapter;
 import de.fluchtwege.trakttvsample.ui.adapter.QueryResultFilmsAdapter;
 import rx.Scheduler;
 import rx.Subscriber;
+import rx.Subscription;
 import timber.log.Timber;
 
 public class FilmListViewModel {
@@ -62,6 +63,9 @@ public class FilmListViewModel {
 	@NonNull
 	private Scheduler schedulerMain;
 
+	private Subscription subscription;
+	private boolean isLoadingPopularFilms = false;
+
 
 	public FilmListViewModel(LinearLayoutManager manager) {
 		this.manager = manager;
@@ -77,6 +81,7 @@ public class FilmListViewModel {
 
 	@VisibleForTesting
 	public void getPopularFilms() {
+		isLoadingPopularFilms = true;
 		dataManager.getPopularFilms(pagesLoaded)
 				.subscribeOn(schedulerIO)
 				.observeOn(schedulerMain)
@@ -89,6 +94,7 @@ public class FilmListViewModel {
 					public void onError(Throwable e) {
 						Timber.e("There was a problem loading the films" + e);
 						setLoadingViews(false);
+						isLoadingPopularFilms = false;
 					}
 
 					@Override
@@ -108,12 +114,17 @@ public class FilmListViewModel {
 		final PopularFilmsAdapter popularFilmsAdapter = (PopularFilmsAdapter) adapter.get();
 		popularFilmsAdapter.addFilms(filmList);
 		popularFilmsAdapter.notifyItemInserted(adapter.get().getItemCount());
+		isLoadingPopularFilms = false;
 	}
 
 	public void getSearchResult(final String query) {
-		dataManager.getSearchResult(query)
+		if (subscription != null) {
+			subscription.unsubscribe();
+		}
+		subscription = dataManager.getSearchResult(query)
 				.subscribeOn(schedulerIO)
 				.observeOn(schedulerMain)
+				.cache()
 				.subscribe(new Subscriber<List<QueryResultFilm>>() {
 					@Override
 					public void onCompleted() {
@@ -129,6 +140,7 @@ public class FilmListViewModel {
 					public void onNext(List<QueryResultFilm> films) {
 						Timber.d("getSearchResult query: " + query + " onNext()");
 						onSearchResult(films);
+						subscription = null;
 					}
 				});
 	}
@@ -192,6 +204,10 @@ public class FilmListViewModel {
 	};
 
 	private void hideSearchBarAndLoadPopularFilms() {
+		if (subscription != null) {
+			subscription.unsubscribe();
+			subscription = null;
+		}
 		searchBarVisibility.set(EditText.GONE);
 		pagesLoaded = FIRST_PAGE;
 		getPopularFilms();
@@ -203,7 +219,7 @@ public class FilmListViewModel {
 		@Override
 		public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
 			if (dy > 0) {
-				if (hasReachedBottomOfList()) {
+				if (!isLoadingPopularFilms && hasReachedBottomOfList()) {
 					Timber.d("onScroll Last Item -> getPopularFilms()");
 					getPopularFilms();
 				}
@@ -220,7 +236,7 @@ public class FilmListViewModel {
 	}
 
 	public boolean onBackPressed() {
-		if (searchBarVisibility.get() == EditText.VISIBLE) {
+		if (adapter.get() instanceof QueryResultFilmsAdapter || searchBarVisibility.get() == EditText.VISIBLE) {
 			hideSearchBarAndLoadPopularFilms();
 			return true;
 		}

@@ -38,7 +38,7 @@ public class DataManager {
 
 	private List<QueryResultFilm> loadSearchResult(String query) {
 		try {
-			Thread.sleep(100);
+			Thread.sleep(1000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}

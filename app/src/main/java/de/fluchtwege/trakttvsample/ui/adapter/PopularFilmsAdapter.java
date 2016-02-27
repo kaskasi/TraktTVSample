@@ -37,8 +37,7 @@ public class PopularFilmsAdapter extends FilmsAdapter<PopularFilmsAdapter.Bindin
 
 	public void addFilms(List<PopularFilm> films) {
 		Timber.d("addFilms() size: " + films.size());
-		int size = this.films.size();
-		this.films.addAll(size, films);
+		this.films.addAll(films);
 	}
 
 	public void clear() {

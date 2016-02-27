@@ -1,5 +1,8 @@
 package de.fluchtwege.trakttvsample.viewmodel;
 
+import android.view.View;
+import android.view.View.OnClickListener;
+
 import de.fluchtwege.trakttvsample.model.PopularFilm;
 
 public class PopularFilmViewModel {

@@ -106,7 +106,6 @@ public class FilmListViewModelTest {
 		final LinearLayoutManager manager = createMockLayoutManagerForPosition(CHILD_COUNT_MIDDLE);
 		final FilmListViewModel viewModel = createAndInitializeViewModel(manager);
 		showSearchBar(viewModel);
-		//doNothing().when(viewModel.adapter.get()).notifyDataChanges();
 		viewModel.onBackPressed();
 		assertEquals(EditText.GONE, viewModel.searchBarVisibility.get());
 	}
