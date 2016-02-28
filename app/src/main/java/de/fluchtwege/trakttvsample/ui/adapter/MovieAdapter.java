@@ -9,25 +9,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.fluchtwege.trakttvsample.R;
-import de.fluchtwege.trakttvsample.databinding.QueryResultFilmBinding;
-import de.fluchtwege.trakttvsample.model.QueryResultFilm;
-import de.fluchtwege.trakttvsample.viewmodel.QueryResultFilmViewModel;
+import de.fluchtwege.trakttvsample.databinding.MovieItemBinding;
+import de.fluchtwege.trakttvsample.model.Movie;
+import de.fluchtwege.trakttvsample.viewmodel.MovieItemViewModel;
 import timber.log.Timber;
 
-public class QueryResultFilmsAdapter extends FilmsAdapter<QueryResultFilmsAdapter.BindingHolder> {
+public class MovieAdapter extends FilmsAdapter<MovieAdapter.BindingHolder> {
 
-	private List<QueryResultFilm> films = new ArrayList<>();
+	private List<Movie> films = new ArrayList<>();
 
 	@Override
 	public BindingHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-		QueryResultFilmBinding filmBinding = DataBindingUtil.inflate(LayoutInflater.from(parent.getContext()), R.layout.query_result_film, parent, false);
+		MovieItemBinding filmBinding = DataBindingUtil.inflate(LayoutInflater.from(parent.getContext()), R.layout.movie_item, parent, false);
 		return new BindingHolder(filmBinding);
 	}
 
 	@Override
 	public void onBindViewHolder(BindingHolder holder, int position) {
-		QueryResultFilmBinding binding = holder.binding;
-		binding.setViewModel(new QueryResultFilmViewModel(films.get(position)));
+		MovieItemBinding binding = holder.binding;
+		binding.setViewModel(new MovieItemViewModel(films.get(position)));
 	}
 
 	@Override
@@ -35,14 +35,10 @@ public class QueryResultFilmsAdapter extends FilmsAdapter<QueryResultFilmsAdapte
 		return films.size();
 	}
 
-	public void addFilms(List<QueryResultFilm> films) {
+	public void addFilms(List<Movie> films) {
 		Timber.d("addFilms() size: " + films.size());
 		int size = this.films.size();
 		this.films.addAll(size, films);
-	}
-
-	public void addAllFilms(List<QueryResultFilm> films) {
-		this.films.addAll(films);
 	}
 
 	public void clear() {
@@ -55,9 +51,9 @@ public class QueryResultFilmsAdapter extends FilmsAdapter<QueryResultFilmsAdapte
 	}
 
 	public static class BindingHolder extends RecyclerView.ViewHolder {
-		private final QueryResultFilmBinding binding;
+		private final MovieItemBinding binding;
 
-		public BindingHolder(QueryResultFilmBinding binding) {
+		public BindingHolder(MovieItemBinding binding) {
 			super(binding.filmCard);
 			this.binding = binding;
 		}

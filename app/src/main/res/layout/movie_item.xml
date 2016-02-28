@@ -6,7 +6,7 @@
 
         <variable
             name="viewModel"
-            type="de.fluchtwege.trakttvsample.viewmodel.QueryResultFilmViewModel"/>
+            type="de.fluchtwege.trakttvsample.viewmodel.MovieItemViewModel"/>
 
     </data>
 
@@ -34,7 +34,7 @@
 
             <ImageView
                 android:id="@+id/film_image"
-                android:layout_width="@dimen/image_size"
+                android:layout_width="wrap_content"
                 android:layout_height="@dimen/image_size"
                 android:layout_margin="@dimen/medium"
                 android:background="@color/background"
@@ -65,7 +65,7 @@
                 android:text="@{viewModel.year}"/>
 
             <TextView
-                android:id="@+id/something"
+                android:id="@+id/rating"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/film_year"
@@ -73,7 +73,7 @@
                 android:layout_toRightOf="@id/film_image"
                 android:background="@color/background"
                 android:padding="@dimen/medium"
-                android:text="@{viewModel.title}"/>
+                android:text="@{viewModel.rating}"/>
 
             <TextView
                 android:id="@+id/film_overview"

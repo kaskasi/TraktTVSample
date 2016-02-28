@@ -1,48 +1,22 @@
 package de.fluchtwege.trakttvsample.model;
 
-//TODO: generate pojo from http response
-public class QueryResultFilm extends Film {
-	private String title;
-	private String year;
-	private String overview;
-	private String imageUrl;
+public class QueryResultFilm {
 
-	public QueryResultFilm(String title, String year, String overview, String imageUrl) {
-		this.title = title;
-		this.year = year;
-		this.overview = overview;
-		this.imageUrl = imageUrl;
-	}
+    public Movie movie;
 
-	public String getTitle() {
-		return title;
-	}
+    public String getImageUrl() {
+        return movie.images.poster.thumb;
+    }
 
-	public void setTitle(String title) {
-		this.title = title;
-	}
+    public String getTitle() {
+        return movie.title;
+    }
 
-	public String getYear() {
-		return year;
-	}
+    public Integer getYear() {
+        return movie.year;
+    }
 
-	public void setYear(String year) {
-		this.year = year;
-	}
-
-	public String getOverview() {
-		return overview;
-	}
-
-	public void setOverview(String overview) {
-		this.overview = overview;
-	}
-
-	public String getImageUrl() {
-		return imageUrl;
-	}
-
-	public void setImageUrl(String imageUrl) {
-		this.imageUrl = imageUrl;
-	}
+    public String getOverview() {
+        return movie.overview;
+    }
 }

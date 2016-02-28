@@ -20,43 +20,48 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import de.fluchtwege.trakttvsample.R;
-import de.fluchtwege.trakttvsample.model.PopularFilm;
+import de.fluchtwege.trakttvsample.model.Movie;
 import de.fluchtwege.trakttvsample.model.QueryResultFilm;
 import de.fluchtwege.trakttvsample.net.DataManager;
-import de.fluchtwege.trakttvsample.ui.adapter.FilmsAdapter;
-import de.fluchtwege.trakttvsample.ui.adapter.PopularFilmsAdapter;
-import de.fluchtwege.trakttvsample.ui.adapter.QueryResultFilmsAdapter;
+import de.fluchtwege.trakttvsample.ui.adapter.MovieAdapter;
+import rx.Observable;
+import rx.Observer;
 import rx.Scheduler;
 import rx.Subscriber;
 import rx.Subscription;
+import rx.functions.Action1;
+import rx.functions.Func1;
 import timber.log.Timber;
 
-public class FilmListViewModel {
+public class MovieListViewModel {
 
 	private static final int FIRST_PAGE = 0;
 	private int pagesLoaded = FIRST_PAGE;
+
+	boolean isSearchResult = false;
 
 	//is it an issue that we are exposing these members for databing?
 	@NonNull
 	public final DataManager dataManager = DataManager.getInstance();
 
 	@NonNull
-	public final ObservableField<FilmsAdapter> adapter = new ObservableField<>();
+	public final ObservableField<MovieAdapter> adapter = new ObservableField<>(new MovieAdapter());
 
 	@NonNull
 	public final LinearLayoutManager manager;
 
 	public ObservableInt searchBarVisibility = new ObservableInt(EditText.GONE);
-	public ObservableBoolean showLoadoadingViews = new ObservableBoolean(false);
 
 	@MenuRes
 	public int menu = R.menu.menu_list;
 
 	@StringRes
-	public int title = R.string.title_list;
+	public ObservableInt title = new ObservableInt(R.string.title_list);
 
 	@NonNull
 	private Scheduler schedulerIO;
@@ -64,10 +69,12 @@ public class FilmListViewModel {
 	private Scheduler schedulerMain;
 
 	private Subscription subscription;
-	private boolean isLoadingPopularFilms = false;
+	private boolean isLoadingFilms = false;
+
+	private String query;
 
 
-	public FilmListViewModel(LinearLayoutManager manager) {
+	public MovieListViewModel(LinearLayoutManager manager) {
 		this.manager = manager;
 	}
 
@@ -81,11 +88,17 @@ public class FilmListViewModel {
 
 	@VisibleForTesting
 	public void getPopularFilms() {
-		isLoadingPopularFilms = true;
+		if (isSearchResult) {
+			pagesLoaded = FIRST_PAGE;
+			adapter.get().clear();
+			adapter.get().notifyDataChanges();
+		}
+		isLoadingFilms = true;
+		isSearchResult = false;
 		dataManager.getPopularFilms(pagesLoaded)
 				.subscribeOn(schedulerIO)
 				.observeOn(schedulerMain)
-				.subscribe(new Subscriber<List<PopularFilm>>() {
+				.subscribe(new Subscriber<List<Movie>>() {
 					@Override
 					public void onCompleted() {
 					}
@@ -93,38 +106,46 @@ public class FilmListViewModel {
 					@Override
 					public void onError(Throwable e) {
 						Timber.e("There was a problem loading the films" + e);
-						setLoadingViews(false);
-						isLoadingPopularFilms = false;
+						isLoadingFilms = false;
 					}
 
 					@Override
-					public void onNext(List<PopularFilm> filmList) {
+					public void onNext(List<Movie> filmList) {
 						Timber.d(" get PopularFilms on Next()");
 						onPopularFilms(filmList);
 					}
 				});
 	}
 
-	private void onPopularFilms(List<PopularFilm> filmList) {
-		setLoadingViews(false);
-		if (pagesLoaded == 0) {
-			adapter.set(new PopularFilmsAdapter());
+	private void onPopularFilms(List<Movie> filmList) {
+		isLoadingFilms = false;
+		for (int i = 0; i < filmList.size(); i++) {
+			Movie popularFilm = filmList.get(i);
+			popularFilm.title = (String.valueOf((pagesLoaded * 10) + i)) + " " + popularFilm.title;
 		}
 		pagesLoaded++;
-		final PopularFilmsAdapter popularFilmsAdapter = (PopularFilmsAdapter) adapter.get();
-		popularFilmsAdapter.addFilms(filmList);
-		popularFilmsAdapter.notifyItemInserted(adapter.get().getItemCount());
-		isLoadingPopularFilms = false;
+		adapter.get().addFilms(filmList);
+		adapter.get().notifyItemInserted(adapter.get().getItemCount());
+		isLoadingFilms = false;
 	}
 
 	public void getSearchResult(final String query) {
+		if (!isSearchResult || !this.query.equals(query)) {
+			pagesLoaded = FIRST_PAGE;
+			adapter.get().clear();
+			adapter.get().notifyDataChanges();
+		}
+		this.query = query;
+		isLoadingFilms = true;
+		isSearchResult = true;
 		if (subscription != null) {
 			subscription.unsubscribe();
 		}
-		subscription = dataManager.getSearchResult(query)
+		//subscription =
+		dataManager.getSearchResult(query, pagesLoaded)
 				.subscribeOn(schedulerIO)
 				.observeOn(schedulerMain)
-				.cache()
+				.debounce(1000, TimeUnit.MILLISECONDS)
 				.subscribe(new Subscriber<List<QueryResultFilm>>() {
 					@Override
 					public void onCompleted() {
@@ -133,7 +154,6 @@ public class FilmListViewModel {
 					@Override
 					public void onError(Throwable e) {
 						Timber.e("There was a problem searching the films" + e);
-						setLoadingViews(false);
 					}
 
 					@Override
@@ -146,15 +166,20 @@ public class FilmListViewModel {
 	}
 
 	private void onSearchResult(List<QueryResultFilm> films) {
-		setLoadingViews(false);
-		adapter.set(new QueryResultFilmsAdapter());
-		final QueryResultFilmsAdapter queryResultFilmsAdapter = (QueryResultFilmsAdapter) adapter.get();
-		queryResultFilmsAdapter.addFilms(films);
-		queryResultFilmsAdapter.notifyDataSetChanged();
+		isLoadingFilms = false;
+		pagesLoaded++;
+		title.set(R.string.title_search);
+		List<Movie> movies = filterMoviesFromSearchResults(films);
+		adapter.get().addFilms(movies);
+		adapter.get().notifyDataSetChanged();
 	}
 
-	private void setLoadingViews(boolean visible) {
-		showLoadoadingViews.set(visible);
+	private List<Movie> filterMoviesFromSearchResults(List<QueryResultFilm> films) {
+		List<Movie> movies = new ArrayList<>();
+		for (QueryResultFilm film : films) {
+			movies.add(film.movie);
+		}
+		return movies;
 	}
 
 	public Toolbar.OnMenuItemClickListener menuItemClickListener = new Toolbar.OnMenuItemClickListener() {
@@ -189,7 +214,7 @@ public class FilmListViewModel {
 
 		@Override
 		public void onTextChanged(CharSequence s, int start, int before, int count) {
-			final String query = s.toString().trim();
+			String query = s.toString().trim();
 			if (query.length() > 0) {
 				getSearchResult(query);
 			} else if (query.length() == 0) {
@@ -208,6 +233,7 @@ public class FilmListViewModel {
 			subscription.unsubscribe();
 			subscription = null;
 		}
+		title.set(R.string.title_list);
 		searchBarVisibility.set(EditText.GONE);
 		pagesLoaded = FIRST_PAGE;
 		getPopularFilms();
@@ -219,9 +245,14 @@ public class FilmListViewModel {
 		@Override
 		public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
 			if (dy > 0) {
-				if (!isLoadingPopularFilms && hasReachedBottomOfList()) {
+				if (!isLoadingFilms && hasReachedBottomOfList()) {
 					Timber.d("onScroll Last Item -> getPopularFilms()");
-					getPopularFilms();
+					if (isSearchResult) {
+						getSearchResult(query);
+					} else {
+						getPopularFilms();
+					}
+
 				}
 			}
 		}
@@ -236,7 +267,7 @@ public class FilmListViewModel {
 	}
 
 	public boolean onBackPressed() {
-		if (adapter.get() instanceof QueryResultFilmsAdapter || searchBarVisibility.get() == EditText.VISIBLE) {
+		if (isSearchResult || searchBarVisibility.get() == EditText.VISIBLE) {
 			hideSearchBarAndLoadPopularFilms();
 			return true;
 		}

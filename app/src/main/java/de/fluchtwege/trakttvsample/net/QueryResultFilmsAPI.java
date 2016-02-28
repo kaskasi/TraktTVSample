@@ -2,7 +2,7 @@ package de.fluchtwege.trakttvsample.net;
 
 import java.util.List;
 
-import de.fluchtwege.trakttvsample.model.Movie;
+import de.fluchtwege.trakttvsample.model.QueryResultFilm;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
@@ -10,9 +10,9 @@ import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 import rx.Observable;
 
-public class PopularFilmsAPI {
+public class QueryResultFilmsAPI {
 
-	public Observable<List<Movie>> getPopularFilms(int page) {
+	public Observable<List<QueryResultFilm>> getQueryResultFilms(String query, int page) {
 		HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
 		logging.setLevel(HttpLoggingInterceptor.Level.BASIC);
 		OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
@@ -21,10 +21,10 @@ public class PopularFilmsAPI {
 				.addCallAdapterFactory(RxJavaCallAdapterFactory.create())
 				.addConverterFactory(GsonConverterFactory.create())
 				.client(httpClient.build())
-				.baseUrl("https://api-v2launch.trakt.tv/movies/")
+				.baseUrl("https://api-v2launch.trakt.tv/")
 				.build();
 
-		PopularFilmsService popularFilmsService = retrofit.create(PopularFilmsService.class);
-		return popularFilmsService.listPopularFilms(page + DataManager.PAGE_OFFSET, DataManager.PAGE_SIZE, DataManager.EXTENSION);
+		QueryResultFilmsService queryResultFilmsService = retrofit.create(QueryResultFilmsService.class);
+		return queryResultFilmsService.listQueryResultFilms(query, DataManager.TYPE_MOVIE, page  + DataManager.PAGE_OFFSET, DataManager.PAGE_SIZE);
 	}
 }

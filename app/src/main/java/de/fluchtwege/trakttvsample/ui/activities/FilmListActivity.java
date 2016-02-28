@@ -7,24 +7,24 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.Toolbar;
 
 import de.fluchtwege.trakttvsample.R;
-import de.fluchtwege.trakttvsample.databinding.FilmListBinding;
-import de.fluchtwege.trakttvsample.viewmodel.FilmListViewModel;
+import de.fluchtwege.trakttvsample.databinding.MovieListBinding;
+import de.fluchtwege.trakttvsample.viewmodel.MovieListViewModel;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
 public class FilmListActivity extends AppCompatActivity {
 
-	private FilmListViewModel viewModel;
+	private MovieListViewModel viewModel;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.film_list);
+		setContentView(R.layout.movie_list);
 		Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 		setSupportActionBar(toolbar);
 
-		viewModel = new FilmListViewModel(new LinearLayoutManager(this));
-		FilmListBinding binding = DataBindingUtil.setContentView(this, R.layout.film_list);
+		viewModel = new MovieListViewModel(new LinearLayoutManager(this));
+		MovieListBinding binding = DataBindingUtil.setContentView(this, R.layout.movie_list);
 		binding.setViewModel(viewModel);
 	}
 

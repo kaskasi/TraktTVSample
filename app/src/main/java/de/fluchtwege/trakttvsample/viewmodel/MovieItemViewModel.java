@@ -6,14 +6,14 @@ import android.widget.ImageView;
 import com.squareup.picasso.Picasso;
 
 import de.fluchtwege.trakttvsample.R;
-import de.fluchtwege.trakttvsample.model.QueryResultFilm;
+import de.fluchtwege.trakttvsample.model.Movie;
 
-public class QueryResultFilmViewModel {
+public class MovieItemViewModel {
 
-	public final QueryResultFilm film;
+	public final Movie movie;
 
-	public QueryResultFilmViewModel(QueryResultFilm film) {
-		this.film = film;
+	public MovieItemViewModel(Movie movie) {
+		this.movie = movie;
 	}
 
 	@BindingAdapter({"bind:imageUrl"})
@@ -25,18 +25,22 @@ public class QueryResultFilmViewModel {
 	}
 
 	public String getImageUrl() {
-		return film.getImageUrl();
+		return movie.images.poster.thumb;
 	}
 
 	public String getTitle() {
-		return film.getTitle();
+		return movie.title;
 	}
 
 	public String getYear() {
-		return film.getYear();
+		return "" + movie.year;
 	}
 
 	public String getOverview() {
-		return film.getOverview();
+		return movie.overview;
+	}
+
+	public String getRating() {
+		return String.valueOf(movie.rating);
 	}
 }
