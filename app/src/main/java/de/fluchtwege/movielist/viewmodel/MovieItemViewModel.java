@@ -1,12 +1,12 @@
-package de.fluchtwege.trakttvsample.viewmodel;
+package de.fluchtwege.movielist.viewmodel;
 
 import android.databinding.BindingAdapter;
 import android.widget.ImageView;
 
 import com.squareup.picasso.Picasso;
 
-import de.fluchtwege.trakttvsample.R;
-import de.fluchtwege.trakttvsample.model.Movie;
+import de.fluchtwege.movielist.R;
+import de.fluchtwege.movielist.model.Movie;
 
 public class MovieItemViewModel {
 

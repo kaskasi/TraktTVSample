@@ -1,4 +1,4 @@
-package de.fluchtwege.trakttvsample;
+package de.fluchtwege.movielist;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

@@ -1,14 +1,20 @@
-package de.fluchtwege.trakttvsample;
+package de.fluchtwege.movielist;
 
 import org.junit.Test;
 
+import de.fluchtwege.movielist.model.Movie;
+import de.fluchtwege.movielist.viewmodel.MovieItemViewModel;
+
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
 
-public class FilmItemViewModelTest {
+public class MovieItemViewModelTest {
 
+	//TODO: add robolectric for testing views
 	@Test
 	public void Every_entry_shows_film_title() {
-		assertEquals(5, 2 + 2);
+		MovieItemViewModel viewModel = new MovieItemViewModel(mock(Movie.class));
+		assertEquals("url", viewModel.getImageUrl());
 	}
 
 	@Test

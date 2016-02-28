@@ -1,4 +1,4 @@
-package de.fluchtwege.trakttvsample.model;
+package de.fluchtwege.movielist.model;
 
 public class Movie {
 
@@ -7,5 +7,4 @@ public class Movie {
     public Integer year;
     public Images images;
     public Float rating;
-
 }

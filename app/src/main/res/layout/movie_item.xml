@@ -6,7 +6,7 @@
 
         <variable
             name="viewModel"
-            type="de.fluchtwege.trakttvsample.viewmodel.MovieItemViewModel"/>
+            type="de.fluchtwege.movielist.viewmodel.MovieItemViewModel"/>
 
     </data>
 

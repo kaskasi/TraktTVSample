@@ -1,10 +1,10 @@
-package de.fluchtwege.trakttvsample;
+package de.fluchtwege.movielist;
 
 import android.app.Application;
 
 import timber.log.Timber;
 
-public class TraktTVApplication extends Application {
+public class MovieListApplication extends Application {
 
 	@Override
 	public void onCreate() {
