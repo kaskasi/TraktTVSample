@@ -40,31 +40,112 @@ import timber.log.Timber;
 
 public class MovieListViewModel {
 
+	private static final int FIRST_PAGE = 0;
+
 	@MenuRes public int menu = R.menu.menu_list;
 	@StringRes public ObservableInt title = new ObservableInt(R.string.title_list);
 
-	@Nullable private String query;
-
-	public LinearLayoutManager manager;
-	public ObservableField<MovieAdapter> adapter = new ObservableField<>(new MovieAdapter());
 	@NonNull public ObservableInt searchBarVisibility = new ObservableInt(EditText.GONE);
+	@NonNull public ObservableField<RecyclerView.OnScrollListener> scrollListener = new ObservableField<>();
+	@NonNull public ObservableField<Toolbar.OnMenuItemClickListener> menuItemClickListener = new ObservableField<>();
+	@NonNull public ObservableField<OnEditorActionListener> editorAction = new ObservableField<>();
+	@NonNull public ObservableField<TextWatcher> textWatcher = new ObservableField<>();
+
 	@Nullable private BehaviorSubject<String> queryChangedSubject;
-
-
-	public RequestsAPI requestsAPI = new RequestsAPI();
-	private boolean isLoadingMovies = false;
+	@Nullable private RequestsAPI requestsAPI;
 	@Nullable private Scheduler schedulerIO;
 	@Nullable private Scheduler schedulerMain;
-	private static final int FIRST_PAGE = 0;
-	private int pagesLoaded = FIRST_PAGE;
+	@Nullable private String query;
+	@Nullable public LinearLayoutManager manager;
+	@Nullable public ObservableField<MovieAdapter> adapter = new ObservableField<>(new MovieAdapter());
 
-	public MovieListViewModel(LinearLayoutManager manager, @NonNull final Scheduler schedulerIO, @NonNull final Scheduler schedulerMain) {
+	private int pagesLoaded = FIRST_PAGE;
+	private boolean isLoadingMovies = false;
+
+	public void setUpViewModel(LinearLayoutManager manager, @NonNull final Scheduler schedulerIO, @NonNull final Scheduler schedulerMain) {
 		this.manager = manager;
 		this.schedulerIO = schedulerIO;
 		this.schedulerMain = schedulerMain;
+		requestsAPI = new RequestsAPI();
+		setUpUILogic();
+		clearAndShowPopularMovies();
 	}
 
-	public void resetToPopularFilms() {
+	@VisibleForTesting
+	public void setUpUILogic() {
+		editorAction.set(new OnEditorActionListener() {
+
+			@Override
+			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+				if (actionId == EditorInfo.IME_ACTION_DONE) {
+					v.setText(new String());
+					searchBarVisibility.set(EditText.GONE);
+				}
+				return false;
+			}
+		});
+
+		menuItemClickListener.set(new Toolbar.OnMenuItemClickListener() {
+
+			@Override
+			public boolean onMenuItemClick(MenuItem item) {
+				if (item.getItemId() == R.id.action_search) {
+					registerQueryChangedSubject();
+					searchBarVisibility.set(EditText.VISIBLE);
+				}
+				return false;
+			}
+		});
+
+		scrollListener.set ( new OnScrollListener() {
+
+			@Override
+			public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+				if (dy > 0) {
+					if (!isLoadingMovies && hasReachedBottomOfList()) {
+						Timber.d("onScroll Last Item -> getPopularMovies()");
+						if (query != null) {
+							query(query);
+						} else {
+							getPopularMovies();
+						}
+
+					}
+				}
+			}
+		});
+
+		textWatcher.set(new TextWatcher() {
+
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+			}
+
+			@Override
+			public void onTextChanged(final CharSequence s, int start, int before, int count) {
+				queryChangedSubject.onNext(s.toString().trim());
+			}
+
+			@Override
+			public void afterTextChanged(Editable s) {
+			}
+
+		});
+
+	}
+
+	public void tearDownViewModel() {
+		unregisterTextChangeSubject();
+		manager = null;
+		query = null;
+		requestsAPI = null;
+		adapter = null;
+		schedulerIO = null;
+		schedulerMain = null;
+	}
+
+	@VisibleForTesting
+	public void clearAndShowPopularMovies() {
 		unregisterTextChangeSubject();
 		title.set(R.string.title_list);
 		searchBarVisibility.set(EditText.GONE);
@@ -73,14 +154,6 @@ public class MovieListViewModel {
 		adapter.get().notifyDataChanges();
 		query = null;
 		getPopularMovies();
-	}
-
-	public void tearDown() {
-		unregisterTextChangeSubject();
-		manager = null;
-		query = null;
-		requestsAPI = null;
-		adapter = null;
 	}
 
 	@VisibleForTesting
@@ -107,6 +180,7 @@ public class MovieListViewModel {
 				});
 	}
 
+	@VisibleForTesting
 	public void query(@NonNull final String query) {
 		this.query = query;
 		isLoadingMovies = true;
@@ -155,6 +229,7 @@ public class MovieListViewModel {
 		}
 	}
 
+	@VisibleForTesting
 	public void registerQueryChangedSubject() {
 		queryChangedSubject = BehaviorSubject.create();
 		queryChangedSubject
@@ -183,75 +258,21 @@ public class MovieListViewModel {
 				});
 	}
 
-	public OnScrollListener scrollListener = new OnScrollListener() {
+	@VisibleForTesting
+	public boolean hasReachedBottomOfList() {
+		if (manager != null) {
+			final int visibleItemCount = manager.getChildCount();
+			final int totalItemCount = manager.getItemCount();
+			final int pastVisiblesItems = manager.findFirstVisibleItemPosition();
 
-		@Override
-		public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-			if (dy > 0) {
-				if (!isLoadingMovies && hasReachedBottomOfList()) {
-					Timber.d("onScroll Last Item -> getPopularMovies()");
-					if (query != null) {
-						query(query);
-					} else {
-						getPopularMovies();
-					}
-
-				}
-			}
+			return (visibleItemCount + pastVisiblesItems) >= totalItemCount;
 		}
-	};
-
-	private boolean hasReachedBottomOfList() {
-		final int visibleItemCount = manager.getChildCount();
-		final int totalItemCount = manager.getItemCount();
-		final int pastVisiblesItems = manager.findFirstVisibleItemPosition();
-
-		return (visibleItemCount + pastVisiblesItems) >= totalItemCount;
+		return false;
 	}
-
-	public Toolbar.OnMenuItemClickListener menuItemClickListener = new Toolbar.OnMenuItemClickListener() {
-
-		@Override
-		public boolean onMenuItemClick(MenuItem item) {
-			if (item.getItemId() == R.id.action_search) {
-				registerQueryChangedSubject();
-				searchBarVisibility.set(EditText.VISIBLE);
-			}
-			return false;
-		}
-	};
-
-	public TextWatcher textWatcher = new TextWatcher() {
-
-		@Override
-		public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-		}
-
-		@Override
-		public void onTextChanged(final CharSequence s, int start, int before, int count) {
-			queryChangedSubject.onNext(s.toString().trim());
-		}
-
-		@Override
-		public void afterTextChanged(Editable s) {
-		}
-	};
-
-	public OnEditorActionListener editorAction = new OnEditorActionListener() {
-
-		@Override
-		public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-			if (actionId == EditorInfo.IME_ACTION_DONE) {
-				v.setText(new String());
-				searchBarVisibility.set(EditText.GONE);
-			}
-			return false;
-		}
-	};
 
 	public boolean onBackPressed() {
 		if (query != null || searchBarVisibility.get() == EditText.VISIBLE) {
-			resetToPopularFilms();
+			clearAndShowPopularMovies();
 			return true;
 		}
 		return false;

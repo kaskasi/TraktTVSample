@@ -17,6 +17,8 @@ import de.fluchtwege.movielist.ui.MovieAdapter;
 import de.fluchtwege.movielist.viewmodel.MovieListViewModel;
 import rx.schedulers.Schedulers;
 
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.argThat;
@@ -26,7 +28,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class MovieListViewModelTest {
 
@@ -37,78 +38,79 @@ public class MovieListViewModelTest {
 
 	@Test
 	public void When_viewmodel_is_initialized_the_10_most_popular_films_are_loaded() {
-		final LinearLayoutManager manager = createMockLayoutManagerForPosition(CHILD_COUNT_MIDDLE);
-		final MovieListViewModel viewModel = createAndInitializeViewModel(manager);
+		final MovieListViewModel viewModel = createAndSetUpViewModel(CHILD_COUNT_MIDDLE);
 		verify(viewModel, times(1)).getPopularMovies();
 	}
 
 	@NonNull
-	private LinearLayoutManager createMockLayoutManagerForPosition(final int childCount) {
-		final LinearLayoutManager manager = mock(LinearLayoutManager.class);
-		when(manager.getChildCount()).thenReturn(childCount);
-		when(manager.findFirstVisibleItemPosition()).thenReturn(VISIBLE_ITMES);
-		when(manager.getItemCount()).thenReturn(LIST_SIZE);
-		return manager;
+	private MovieListViewModel createAndSetUpViewModel(final int listPosition) {
+		final MovieListViewModel viewModel = spy(new MovieListViewModel());
+		LinearLayoutManager mockLayoutManager = createMockLayoutManagerForPosition(listPosition);
+		viewModel.adapter.set(spy(new MovieAdapter()));
+		doNothing().when(viewModel.adapter.get()).notifyDataChanges();
+		viewModel.setUpViewModel(mockLayoutManager, Schedulers.immediate(), Schedulers.immediate());
+		return viewModel;
 	}
 
 	@NonNull
-	private MovieListViewModel createAndInitializeViewModel(final LinearLayoutManager manager) {
-		final MovieListViewModel viewModel = spy(new MovieListViewModel(manager, Schedulers.immediate(), Schedulers.immediate()));
-		viewModel.adapter.set(spy(new MovieAdapter()));
-		doNothing().when(viewModel.adapter.get()).notifyDataChanges();
-		viewModel.resetToPopularFilms();
-		return viewModel;
+	private LinearLayoutManager createMockLayoutManagerForPosition(final int childCount) {
+		final LinearLayoutManager manager = spy(new LinearLayoutManager(mock(Context.class)));
+		doReturn(childCount).when(manager).getChildCount();
+		doReturn(VISIBLE_ITMES).when(manager).findFirstVisibleItemPosition();
+		doReturn(LIST_SIZE).when(manager).getItemCount();
+		return manager;
 	}
 
 	@Test
 	public void When_user_has_not_reached_the_end_of_list_while_scrolling_next_10_films_are_loaded_only_once() {
-		final LinearLayoutManager manager = createMockLayoutManagerForPosition(CHILD_COUNT_MIDDLE);
-		final MovieListViewModel viewModel = createAndInitializeViewModel(manager);
+		final MovieListViewModel viewModel = createAndSetUpViewModel(CHILD_COUNT_MIDDLE);
+
+		viewModel.scrollListener.get().onScrolled(mock(RecyclerView.class), 0, 10);
 		verify(viewModel, times(1)).getPopularMovies();
 	}
 
 	@Test
 	public void When_user_has_reached_the_end_of_list_while_scrolling_next_10_films_are_loaded() {
-		final LinearLayoutManager manager = createMockLayoutManagerForPosition(CHILD_COUNT_BOTTOM);
-		final MovieListViewModel viewModel = createAndInitializeViewModel(manager);
-		verify(viewModel).getPopularMovies();
+		final MovieListViewModel viewModel = createAndSetUpViewModel(CHILD_COUNT_BOTTOM);
 
-		viewModel.scrollListener.onScrolled(mock(RecyclerView.class), 0, 10);
-		verify(viewModel).getPopularMovies();
+		doReturn(true).when(viewModel).hasReachedBottomOfList();
+		viewModel.scrollListener.get().onScrolled(mock(RecyclerView.class), 0, 10);
+		verify(viewModel, times(2)).getPopularMovies();
 	}
 
 	@Test
 	public void When_user_presses_search_icon_in_toolbar_searchbar_is_shown() {
-		final LinearLayoutManager manager = createMockLayoutManagerForPosition(CHILD_COUNT_MIDDLE);
-		final MovieListViewModel viewModel = createAndInitializeViewModel(manager);
+		final MovieListViewModel viewModel = createAndSetUpViewModel(CHILD_COUNT_MIDDLE);
 		showSearchBar(viewModel);
 		assertEquals(EditText.VISIBLE, viewModel.searchBarVisibility.get());
+	}
+
+	@Test
+	public void When_user_presses_search_icon_in_toolbar_queryChangeSubject_is_registered() {
+		final MovieListViewModel viewModel = createAndSetUpViewModel(CHILD_COUNT_MIDDLE);
+		showSearchBar(viewModel);
+		verify(viewModel, times(1)).registerQueryChangedSubject();
 	}
 
 	private void showSearchBar(final MovieListViewModel viewModel) {
 		final MenuItem searchMenuItem = mock(MenuItem.class);
 		doReturn(R.id.action_search).when(searchMenuItem).getItemId();
-		viewModel.menuItemClickListener.onMenuItemClick(searchMenuItem);
+		viewModel.menuItemClickListener.get().onMenuItemClick(searchMenuItem);
 	}
 
 	@Test
 	public void When_user_presses_Done_button_in_keyboard_searchbar_is_hidden() {
-		final LinearLayoutManager manager = createMockLayoutManagerForPosition(CHILD_COUNT_MIDDLE);
-		final MovieListViewModel viewModel = createAndInitializeViewModel(manager);
-//		showSearchBar(viewModel);
+		final MovieListViewModel viewModel = createAndSetUpViewModel(CHILD_COUNT_MIDDLE);
 
 		final KeyEvent doneKeyEvent = mock(KeyEvent.class);
 		doReturn(EditorInfo.IME_ACTION_DONE).when(doneKeyEvent).getAction();
-		viewModel.editorAction.onEditorAction(spy(new TextView(mock(Context.class))), 0, doneKeyEvent);
+		viewModel.editorAction.get().onEditorAction(spy(new TextView(mock(Context.class))), 0, doneKeyEvent);
 		assertEquals(EditText.GONE, viewModel.searchBarVisibility.get());
-
 	}
-
 
 	@Test
 	public void When_user_presses_Back_button_in_navigation_bar_searchbar_is_hidden() {
-		final LinearLayoutManager manager = createMockLayoutManagerForPosition(CHILD_COUNT_MIDDLE);
-		final MovieListViewModel viewModel = createAndInitializeViewModel(manager);
+		final MovieListViewModel viewModel = createAndSetUpViewModel(CHILD_COUNT_MIDDLE);
 		showSearchBar(viewModel);
 		viewModel.onBackPressed();
 		assertEquals(EditText.GONE, viewModel.searchBarVisibility.get());
@@ -116,32 +118,22 @@ public class MovieListViewModelTest {
 
 	@Test
 	public void When_user_enters_text_in_searchview_a_new_search_is_started() {
-		final LinearLayoutManager manager = createMockLayoutManagerForPosition(CHILD_COUNT_MIDDLE);
-		final MovieListViewModel viewModel = createAndInitializeViewModel(manager);
-		verify(viewModel).getPopularMovies();
+		final MovieListViewModel viewModel = createAndSetUpViewModel(CHILD_COUNT_MIDDLE);
+		verify(viewModel).clearAndShowPopularMovies();
 
 		showSearchBar(viewModel);
+		verify(viewModel).registerQueryChangedSubject();
+
 		final String query = "someQuery";
 		doNothing().when(viewModel.adapter.get()).notifyDataChanges();
-		viewModel.textWatcher.onTextChanged(query, 0, 0, query.length());
+		viewModel.textWatcher.get().onTextChanged(query, 0, 0, query.length());
 
-		verify(viewModel).query(argThat(new ArgumentMatcher<String>() {
-											@Override
-											public boolean matches(Object argument) {
-												if (argument != null) {
-													String arg = (String) argument;
-													return arg.equals(query);
-												}
-												return false;
-											}
-										}
-		));
+		verify(viewModel).query(argThat(new IsQueryString()));
 	}
 
 	@Test
 	public void When_user_enters_text_in_searchview_and_an_old_search_is_running_old_search_is_stopped() {
-		final LinearLayoutManager manager = createMockLayoutManagerForPosition(CHILD_COUNT_MIDDLE);
-		final MovieListViewModel viewModel = createAndInitializeViewModel(manager);
+		final MovieListViewModel viewModel = createAndSetUpViewModel(CHILD_COUNT_MIDDLE);
 		MenuItem searchMenuItem = mock(MenuItem.class);
 		doReturn(R.id.action_search).when(searchMenuItem).getItemId();
 		String query = "foo";
@@ -149,10 +141,11 @@ public class MovieListViewModelTest {
 		viewModel.query("fo");
 		viewModel.query(query);
 
+		//TODO: check if onMovieLoaded was called
 		assertTrue(false);
 	}
 
-	class IsQueryString extends ArgumentMatcher {
+	class IsQueryString extends ArgumentMatcher<String> {
 
 		@Override
 		public boolean matches(Object argument) {
@@ -162,27 +155,28 @@ public class MovieListViewModelTest {
 
 	@Test
 	public void When_the_viewmodel_recieves_a_teardown_call_manager_class_should_not_leak() {
-		final LinearLayoutManager manager = createMockLayoutManagerForPosition(CHILD_COUNT_MIDDLE);
-		final MovieListViewModel viewModel = createAndInitializeViewModel(manager);
-		viewModel.tearDown();
-		assertEquals(null, viewModel.manager);
+		final MovieListViewModel viewModel = createAndSetUpViewModel(CHILD_COUNT_MIDDLE);
+		viewModel.tearDownViewModel();
+		assertNull(viewModel.manager);
+	}
+
+	@Test
+	public void When_the_viewmodel_is_setup_uilogic_is_setup() {
+		final MovieListViewModel viewModel = createAndSetUpViewModel(CHILD_COUNT_MIDDLE);
+		verify(viewModel).setUpUILogic();
 	}
 
 	@Test
 	public void When_the_view_model_is_reset_the_adapter_will_be_cleared() {
-		final LinearLayoutManager manager = createMockLayoutManagerForPosition(CHILD_COUNT_MIDDLE);
-		final MovieListViewModel viewModel = createAndInitializeViewModel(manager);
+		final MovieListViewModel viewModel = createAndSetUpViewModel(CHILD_COUNT_MIDDLE);
 		doNothing().when(viewModel.adapter.get()).notifyDataChanges();
-		viewModel.resetToPopularFilms();
-		verify(viewModel.adapter.get()).clear();
+		viewModel.clearAndShowPopularMovies();
+		verify(viewModel.adapter.get(), times(2)).clear();
 	}
 
 	@Test
 	public void When_a_query_is_entered_the_adapter_will_be_cleared() {
-		final LinearLayoutManager manager = createMockLayoutManagerForPosition(CHILD_COUNT_MIDDLE);
-		final MovieListViewModel viewModel = createAndInitializeViewModel(manager);
-		//viewModel.query("fo");
-
+		final MovieListViewModel viewModel = createAndSetUpViewModel(CHILD_COUNT_MIDDLE);
 
 		verify(viewModel.adapter.get()).clear();
 	}

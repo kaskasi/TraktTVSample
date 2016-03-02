@@ -27,16 +27,21 @@ public class MovieListActivity extends AppCompatActivity {
 	@Override
 	protected void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
-		viewModel = new MovieListViewModel(new LinearLayoutManager(this), Schedulers.io(), AndroidSchedulers.mainThread());
+		viewModel = new MovieListViewModel();
 		MovieListBinding binding = DataBindingUtil.setContentView(this, R.layout.movie_list);
 		binding.setViewModel(viewModel);
-		viewModel.resetToPopularFilms();
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		viewModel.setUpViewModel(new LinearLayoutManager(this), Schedulers.io(), AndroidSchedulers.mainThread());
 	}
 
 	@Override
 	protected void onPause() {
 		if (viewModel != null) {
-			viewModel.tearDown();
+			viewModel.tearDownViewModel();
 		}
 		super.onPause();
 	}
