@@ -21,13 +21,13 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.BindingHolde
 
 	@Override
 	public void onBindViewHolder( MovieAdapter.BindingHolder holder, int position) {
-		MovieItemBinding binding = holder.binding;
+		final MovieItemBinding binding = holder.binding;
 		binding.setViewModel(new MovieItemViewModel(movies.get(position)));
 	}
 
 	@Override
 	public BindingHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-		MovieItemBinding filmBinding = DataBindingUtil.inflate(LayoutInflater.from(parent.getContext()), R.layout.movie_item, parent, false);
+		final MovieItemBinding filmBinding = DataBindingUtil.inflate(LayoutInflater.from(parent.getContext()), R.layout.movie_item, parent, false);
 		return new BindingHolder(filmBinding);
 
 	}

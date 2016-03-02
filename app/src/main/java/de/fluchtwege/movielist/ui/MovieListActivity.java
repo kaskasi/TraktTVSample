@@ -20,7 +20,7 @@ public class MovieListActivity extends AppCompatActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.movie_list);
-		Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+		final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 		setSupportActionBar(toolbar);
 	}
 
@@ -28,14 +28,16 @@ public class MovieListActivity extends AppCompatActivity {
 	protected void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
 		viewModel = new MovieListViewModel();
-		MovieListBinding binding = DataBindingUtil.setContentView(this, R.layout.movie_list);
+		final MovieListBinding binding = DataBindingUtil.setContentView(this, R.layout.movie_list);
 		binding.setViewModel(viewModel);
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-		viewModel.setUpViewModel(new LinearLayoutManager(this), Schedulers.io(), AndroidSchedulers.mainThread());
+		if (viewModel != null) {
+			viewModel.setUpViewModel(new LinearLayoutManager(this), Schedulers.io(), AndroidSchedulers.mainThread());
+		}
 	}
 
 	@Override

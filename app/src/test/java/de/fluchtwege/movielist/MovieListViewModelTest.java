@@ -13,6 +13,8 @@ import android.widget.TextView;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 
+import de.fluchtwege.movielist.net.Requests;
+import de.fluchtwege.movielist.net.RequestsAPI;
 import de.fluchtwege.movielist.ui.MovieAdapter;
 import de.fluchtwege.movielist.viewmodel.MovieListViewModel;
 import rx.schedulers.Schedulers;
@@ -32,9 +34,9 @@ import static org.mockito.Mockito.verify;
 public class MovieListViewModelTest {
 
 	private static final int LIST_SIZE = 10;
-	public static final int CHILD_COUNT_MIDDLE = 5;
-	public static final int VISIBLE_ITMES = 2;
-	public static final int CHILD_COUNT_BOTTOM = 8;
+	private static final int VISIBLE_ITMES = 2;
+	private static final int CHILD_COUNT_MIDDLE = 5;
+	private static final int CHILD_COUNT_BOTTOM = 8;
 
 	@Test
 	public void When_viewmodel_is_initialized_the_10_most_popular_films_are_loaded() {
@@ -45,7 +47,7 @@ public class MovieListViewModelTest {
 	@NonNull
 	private MovieListViewModel createAndSetUpViewModel(final int listPosition) {
 		final MovieListViewModel viewModel = spy(new MovieListViewModel());
-		LinearLayoutManager mockLayoutManager = createMockLayoutManagerForPosition(listPosition);
+		final LinearLayoutManager mockLayoutManager = createMockLayoutManagerForPosition(listPosition);
 		viewModel.adapter.set(spy(new MovieAdapter()));
 		doNothing().when(viewModel.adapter.get()).notifyDataChanges();
 		viewModel.setUpViewModel(mockLayoutManager, Schedulers.immediate(), Schedulers.immediate());
@@ -129,20 +131,31 @@ public class MovieListViewModelTest {
 		viewModel.textWatcher.get().onTextChanged(query, 0, 0, query.length());
 
 		verify(viewModel).query(argThat(new IsQueryString()));
+		//failing because queryChangedSubject is registered but does not call onNext
 	}
 
 	@Test
 	public void When_user_enters_text_in_searchview_and_an_old_search_is_running_old_search_is_stopped() {
 		final MovieListViewModel viewModel = createAndSetUpViewModel(CHILD_COUNT_MIDDLE);
-		MenuItem searchMenuItem = mock(MenuItem.class);
-		doReturn(R.id.action_search).when(searchMenuItem).getItemId();
-		String query = "foo";
-		viewModel.query("f");
-		viewModel.query("fo");
-		viewModel.query(query);
+		showSearchBar(viewModel);
+		verify(viewModel).registerQueryChangedSubject();
 
-		//TODO: check if onMovieLoaded was called
-		assertTrue(false);
+		final String query = "foo";
+		viewModel.textWatcher.get().onTextChanged("f", 0, 0, 1);
+		viewModel.textWatcher.get().onTextChanged("o", 1, 0, 1);
+		viewModel.textWatcher.get().onTextChanged("o", 2, 0, 1);
+
+		verify(viewModel, times(1)).query(argThat(new ArgumentMatcher<String>() {
+			@Override
+			public boolean matches(Object argument) {
+				if (argument instanceof String) {
+					String text = (String) argument;
+					return text.equals(query);
+				}
+				return false;
+			}
+		}));
+		//failing because queryChangedSubject is registered but does not call onNext
 	}
 
 	class IsQueryString extends ArgumentMatcher<String> {

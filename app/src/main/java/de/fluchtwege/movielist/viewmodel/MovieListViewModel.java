@@ -97,7 +97,7 @@ public class MovieListViewModel {
 			}
 		});
 
-		scrollListener.set ( new OnScrollListener() {
+		scrollListener.set(new OnScrollListener() {
 
 			@Override
 			public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
@@ -206,6 +206,14 @@ public class MovieListViewModel {
 				});
 	}
 
+	private List<Movie> filterMoviesFromSearchResults(List<MovieQuery> movieQueries) {
+		List<Movie> result = new ArrayList<>();
+		for (MovieQuery movieQuery : movieQueries) {
+			result.add(movieQuery.movie);
+		}
+		return result;
+	}
+
 	@VisibleForTesting
 	public void onMoviesLoaded(final List<Movie> movies) {
 		isLoadingMovies = false;
@@ -214,13 +222,6 @@ public class MovieListViewModel {
 		adapter.get().notifyDataChanges();
 	}
 
-	private List<Movie> filterMoviesFromSearchResults(List<MovieQuery> movieQueries) {
-		List<Movie> result = new ArrayList<>();
-		for (MovieQuery movieQuery : movieQueries) {
-			result.add(movieQuery.movie);
-		}
-		return result;
-	}
 
 	private void unregisterTextChangeSubject() {
 		if (queryChangedSubject != null) {
